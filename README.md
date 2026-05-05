@@ -56,9 +56,9 @@ The following tools must be installed and available in your PATH:
 
 ---
 
-## Architecture
+## Technical Highlights
 
-**Strategy Pattern — dependency installer**
+**Strategy pattern for dependency detection**
 
 Rather than a chain of `if/else` blocks, the installer uses an ordered hashtable that maps lockfile names to install commands. The script walks the list in priority order and runs the first match it finds:
 
@@ -74,9 +74,17 @@ $InstallStrategies = [ordered]@{
 
 This makes adding support for a new package manager a one-line change, and keeps the detection logic easy to read and reason about.
 
-**GitHub API integration**
+**Dynamic template discovery via GitHub API**
 
-Templates are fetched using the `gh` CLI with a `--topic template` filter, then narrowed further by matching repository topics against JS ecosystem keywords (`js`, `typescript`, `react`, `nextjs`, etc.). This means the template list stays in sync with your GitHub account automatically — no manual updates needed.
+Templates are fetched using the `gh` CLI with a `--topic template` filter, then narrowed further by matching repository topics against JS ecosystem keywords (`js`, `typescript`, `react`, `nextjs`, etc.). This means the template list stays in sync with your GitHub account automatically — no manual updates or hardcoded lists to maintain.
+
+**Git history isolation**
+
+After cloning, the script removes the template's `.git` folder entirely and runs `git init` with a clean initial commit. This ensures the new project starts with a fresh history, with no inherited commits or remotes from the template repo bleeding through.
+
+**Input validation on the CLI menu**
+
+The interactive menu validates user input before acting on it — non-numeric entries, out-of-range selections, and empty input are all caught and re-prompted rather than causing the script to fail or behave unexpectedly mid-run.
 
 ---
 
