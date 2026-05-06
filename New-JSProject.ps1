@@ -37,7 +37,6 @@ function New-JSProject {
         [Parameter(Position = 1)]
         [string]$TemplateName,
 
-        # Default to current location ($PWD) if not specified, simpler for users
         [Parameter(Position = 2)]
         [string]$ParentPath = $PWD
     )
@@ -46,7 +45,6 @@ function New-JSProject {
     # 1. SETUP & PATH RESOLUTION
     # -------------------------------------------------------------------------
     
-    # Priority list for dependency installation
     $InstallStrategies = [ordered]@{
         "pnpm-lock.yaml"    = { Write-Host "   Detected pnpm."; pnpm install }
         "yarn.lock"         = { Write-Host "   Detected yarn."; yarn install }
@@ -55,7 +53,6 @@ function New-JSProject {
         "package.json"      = { Write-Host "   Defaulting to npm."; npm install } 
     }
 
-    # Safe Path Construction (Fixes the Resolve-Path crash)
     if (-not (Test-Path $ParentPath)) {
         try {
             New-Item -ItemType Directory -Path $ParentPath -Force | Out-Null
@@ -78,11 +75,9 @@ function New-JSProject {
     Write-Host "🔍 Fetching templates..." -ForegroundColor Cyan
     
     try {
-        # Fetch, Parse JSON, then Filter
         $repos = gh repo list --topic template --json "name,sshUrl,repositoryTopics,description" --limit 50 |
         ConvertFrom-Json | 
         Where-Object { 
-            # Flexible matching for JS ecosystem terms
             $_.repositoryTopics.name -match 'js|javascript|typescript|node|react|nextjs|vue' 
         }
     }
@@ -96,7 +91,6 @@ function New-JSProject {
         return 
     }
 
-    # Select Template
     $selectedRepo = $null
     
     if ($TemplateName) { 
@@ -112,7 +106,6 @@ function New-JSProject {
             if ($repos[$i].description) { Write-Host " - $($repos[$i].description)" -ForegroundColor Gray } else { Write-Host "" }
         }
 
-        # Input Validation Loop (Prevents crashes on bad input)
         do {
             $choice = Read-Host "`nEnter number (1-$($repos.Count))"
             if ($choice -match '^\d+$' -and $choice -ge 1 -and $choice -le $repos.Count) {
@@ -128,13 +121,11 @@ function New-JSProject {
     # -------------------------------------------------------------------------
     Write-Host "`n🚀 Scaffolding at: $projectPath" -ForegroundColor Cyan
 
-    # Git clone handles folder creation, but we ensure parent exists above.
     git clone $selectedRepo.sshUrl $projectPath
     if ($LASTEXITCODE -ne 0) { return }
 
     Set-Location $projectPath
 
-    # Detach from template history
     if (Test-Path .git) {
         Remove-Item -Recurse -Force .git
         git init | Out-Null
